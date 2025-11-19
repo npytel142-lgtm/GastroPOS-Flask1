@@ -234,18 +234,42 @@ def admin_panel():
         
     today_str = datetime.now().strftime('%Y-%m-%d')
     
-    # Pobieramy daty z formularza GET
+    # Pobieramy daty z formularza (choć panel będzie je ładować dynamicznie, są potrzebne do ustawienia pól)
     start_date = request.args.get('start_date', today_str)
     end_date = request.args.get('end_date', today_str)
 
-    waiter_summary = get_all_waiter_summary(start_date, end_date)
+    # Wersja poprawiona: usuwamy ładowanie waiter_summary tutaj. Zrobi to JavaScript przez API.
+    # waiter_summary = get_all_waiter_summary(start_date, end_date) # USUNIĘTE
+
     menu_categories = get_all_categories()
 
     return render_template('admin.html', 
-                           waiter_summary=waiter_summary,
+                           # waiter_summary=waiter_summary, # USUNIĘTE
                            menu_categories=menu_categories,
                            start_date=start_date,
                            end_date=end_date)
+
+
+# --- API POBIERANIA PODSUMOWANIA KELNERÓW (NOWA TRASA) ---
+@app.route('/api/waiter_summary', methods=['GET'])
+def api_get_waiter_summary():
+    """API do pobierania podsumowania sprzedaży kelnerów (dla panelu admina)."""
+    
+    if not session.get('logged_in') or session['waiter_id'] != '9999':
+        return jsonify({'error': 'Brak dostępu. Wymagane uprawnienia administratora.'}), 403
+
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    if not start_date or not end_date:
+        return jsonify({'error': 'Brak podanych dat (start_date i end_date).'}), 400
+
+    try:
+        waiter_summary = get_all_waiter_summary(start_date, end_date)
+        return jsonify(waiter_summary)
+
+    except Exception as e:
+        return jsonify({'error': f'Błąd serwera podczas generowania podsumowania: {str(e)}'}), 500
 
 
 # --- NOWA TRASA: GENEROWANIE RAPORTU PDF PRZEZ FPDF2 ---
