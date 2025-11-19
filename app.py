@@ -19,7 +19,7 @@ init_db()
 @app.before_request
 def make_session_permanent():
     """Ustawia sesję na stałą."""
-    session.permanent = True
+    session.permanent = False
 
 # --- LOGOWANIE ---
 @app.route('/', methods=['GET', 'POST'])
@@ -380,3 +380,4 @@ def api_add_item_admin():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
