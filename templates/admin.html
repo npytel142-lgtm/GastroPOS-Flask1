@@ -7,242 +7,188 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; }
         .container { max-width: 1200px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        
-        /* NOWE STYLE DLA NAGŁÓWKA Z PRZYCISKIEM WYLOGUJ */
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 20px; 
-            padding-bottom: 10px;
-            border-bottom: 2px solid #008CBA;
-        }
-        .logout-btn { 
-            background-color: #F44336; 
-            color: white; 
-            padding: 10px 20px; 
-            border: none; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            text-decoration: none; 
-            font-weight: bold;
-        }
-        /* KONIEC NOWYCH STYLÓW */
-
-        h1 { color: #333; margin: 0; }
+        h1 { color: #333; border-bottom: 2px solid #008CBA; padding-bottom: 10px; margin-bottom: 20px; }
         h2 { color: #008CBA; margin-top: 30px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
         .tab { display: none; }
         .tab.active { display: block; }
         .tab-buttons button { padding: 10px 20px; margin-right: 10px; cursor: pointer; border: 1px solid #ccc; background: #eee; border-radius: 5px 5px 0 0; }
         .tab-buttons button.active { background: #008CBA; color: white; border-color: #008CBA; }
-        
-        /* Sekcja raportu */
-        .report-form { display: flex; gap: 20px; align-items: flex-end; margin-bottom: 20px; }
-        .report-form label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .report-form input[type="date"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .report-form button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .report-form button:hover { background-color: #45a049; }
-
-        /* Tabela podsumowania */
-        .summary-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .summary-table th, .summary-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        .summary-table th { background-color: #008CBA; color: white; }
-        .summary-table tr:nth-child(even) { background-color: #f2f2f2; }
-        
-        /* Sekcja dodawania menu */
-        .add-menu-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .add-menu-form label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .add-menu-form input, .add-menu-form select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .add-menu-form button { 
-            grid-column: 1 / 3; 
-            background-color: #FFC107; 
-            color: #333; 
-            padding: 15px; 
-            border: none; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 1.1em;
-        }
-        .add-menu-form button:hover { background-color: #e0b000; }
-        
-        /* Komunikat */
-        .message-box { 
-            padding: 10px; 
-            margin-top: 20px; 
-            border-radius: 4px; 
-            font-weight: bold; 
-            text-align: center;
-            display: none; /* Domyślnie ukryte */
-        }
-        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #008CBA; color: white; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .form-group button { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        .form-group button:hover { background-color: #45a049; }
+        .message { padding: 10px; background-color: #f0f8ff; border: 1px solid #008CBA; color: #008CBA; margin-top: 10px; border-radius: 4px; display: none; }
+        .back-button { float: right; padding: 10px 20px; background-color: #f44336; color: white; text-decoration: none; border-radius: 4px; }
+        .back-button:hover { background-color: #da190b; }
     </style>
 </head>
 <body>
     <div class="container">
-        
-        <div class="header">
-            <h1>Panel Administratora - GastroPOS</h1>
-            <a href="{{ url_for('logout') }}" class="logout-btn">Wyloguj (9999)</a>
-        </div>
-        
+        <a href="{{ url_for('tables') }}" class="back-button">Wróć do Stolików</a>
+        <h1>Panel Administratora</h1>
+
         <div class="tab-buttons">
-            <button class="active" onclick="openTab('billing')">Podsumowanie Kelnerów</button>
-            <button onclick="openTab('menu')">Edycja Menu</button>
+            <button class="active" onclick="openTab('billing')">Rozliczenie Kelnerów</button>
+            <button onclick="openTab('menu')">Zarządzanie Menu</button>
         </div>
 
         <div id="billing" class="tab active">
-            <h2>Generowanie Raportu Sprzedaży</h2>
-            
-            <form id="report-form" class="report-form">
-                <div>
+            <h2>Raport Sprzedaży wg Kelnerów</h2>
+            <form id="report-form" style="display: flex; gap: 20px; align-items: flex-end; margin-bottom: 20px;">
+                <div class="form-group" style="flex: 1;">
                     <label for="start_date">Data początkowa:</label>
-                    <input type="date" id="start_date" name="start_date" required>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date }}" required>
                 </div>
-                <div>
+                <div class="form-group" style="flex: 1;">
                     <label for="end_date">Data końcowa:</label>
-                    <input type="date" id="end_date" name="end_date" required>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date }}" required>
                 </div>
-                <button type="submit">Generuj PDF i Wyświetl</button>
+                <div class="form-group" style="flex: 0; display: flex; gap: 10px;">
+                    <button type="button" id="display-report-btn" onclick="loadWaiterSummary()" style="background-color: #008CBA;">Wyświetl Raport</button>
+                    <button type="submit" formaction="{{ url_for('api_generate_pdf') }}" formmethod="GET" style="background-color: #f44336;">Generuj PDF 💾</button>
+                </div>
             </form>
-            
-            <h2>Podsumowanie Sprzedaży</h2>
-            
-            <table class="summary-table" id="waiter-summary-table">
+
+            <table>
                 <thead>
                     <tr>
-                        <th>Kelner (ID)</th>
-                        <th>Liczba Rachunków</th>
-                        <th>Całkowita Sprzedaż (PLN)</th>
+                        <th>ID Kelnera</th>
+                        <th>Imię</th>
+                        <th>Liczba Zamkniętych Rachunków</th>
+                        <th>Łączna Sprzedaż (PLN)</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="waiter-summary-body">
                     </tbody>
+                <tfoot id="waiter-summary-footer">
+                    </tfoot>
             </table>
-            
         </div>
 
         <div id="menu" class="tab">
-            <h2>Dodaj Nową Pozycję Menu</h2>
-            <div id="add-menu-message" class="message-box"></div>
-            <form id="add-menu-form" class="add-menu-form">
-                <div>
-                    <label for="name">Nazwa Produktu:</label>
-                    <input type="text" id="name" name="name" required>
+            <h2>Dodawanie Nowej Pozycji Menu</h2>
+            <div id="menu-message" class="message"></div>
+            <form id="add-item-form">
+                <div class="form-group">
+                    <label for="item_name">Nazwa pozycji:</label>
+                    <input type="text" id="item_name" name="name" required>
                 </div>
-                <div>
-                    <label for="price">Cena (PLN):</label>
-                    <input type="text" id="price" name="price" placeholder="np. 15.50" required>
+                <div class="form-group">
+                    <label for="item_price">Cena (np. 12.50):</label>
+                    <input type="text" id="item_price" name="price" required placeholder="Użyj kropki lub przecinka">
                 </div>
-                <div style="grid-column: 1 / 3;">
-                    <label for="category">Kategoria:</label>
-                    <select id="category" name="category" required>
-                        </select>
+                <div class="form-group">
+                    <label for="item_category">Kategoria:</label>
+                    <select id="item_category" name="category" required>
+                        <option value="">-- Wybierz istniejącą --</option>
+                        {% for cat in menu_categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" id="new_category_input" placeholder="Wpisz nową kategorię (jeśli brak na liście)" style="margin-top: 5px;">
                 </div>
-                <button type="submit">Dodaj do Menu</button>
+                <div class="form-group">
+                    <button type="submit">Dodaj Pozycję do Menu</button>
+                </div>
             </form>
         </div>
-
     </div>
 
     <script>
-        const tableBody = document.querySelector('#waiter-summary-table tbody');
-        const categorySelect = document.getElementById('category');
-        
-        // Funkcja do otwierania zakładek
         function openTab(tabName) {
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => tab.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-
-            const buttons = document.querySelectorAll('.tab-buttons button');
-            buttons.forEach(btn => {
-                if (btn.textContent.toLowerCase().includes(tabName.toLowerCase())) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
+            var i;
+            var tabs = document.getElementsByClassName("tab");
+            for (i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove("active");
+            }
+            document.getElementById(tabName).classList.add("active");
+            
+            var buttons = document.querySelectorAll('.tab-buttons button');
+            for (i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove("active");
+                if (buttons[i].textContent.includes(tabName === 'billing' ? 'Rozliczenie' : 'Menu')) {
+                     buttons[i].classList.add("active");
                 }
-            });
+            }
         }
         
-        // Funkcja do pobierania podsumowania kelnerów
-        async function fetchWaiterSummary(startDate, endDate) {
-            try {
-                const url = `{{ url_for('api_get_waiter_summary') }}?start_date=${startDate}&end_date=${endDate}`;
-                const response = await fetch(url);
-                const summary = await response.json();
+        async function loadWaiterSummary() {
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            const summaryBody = document.getElementById('waiter-summary-body');
+            const summaryFooter = document.getElementById('waiter-summary-footer');
+            
+            // Wersja poprawiona: użycie url_for('api_get_waiter_summary'), które jest teraz zdefiniowane w app.py
+            const url = `{{ url_for('api_get_waiter_summary') }}?start_date=${startDate}&end_date=${endDate}`;
 
-                tableBody.innerHTML = ''; // Wyczyść tabelę
-                
-                if (summary.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Brak danych w wybranym okresie.</td></tr>';
+            summaryBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Ładowanie danych...</td></tr>';
+            summaryFooter.innerHTML = '';
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                summaryBody.innerHTML = ''; 
+                let totalSalesSum = 0;
+
+                if (data.error) {
+                    summaryBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: red;">Błąd: ${data.error}</td></tr>`;
                     return;
                 }
 
-                summary.forEach(item => {
-                    const row = tableBody.insertRow();
-                    row.insertCell().textContent = `${item.waiter_name} (${item.waiter_id})`;
-                    row.insertCell().textContent = item.orders_count;
-                    row.insertCell().textContent = item.total_sales.toFixed(2);
+                if (data.length === 0) {
+                    summaryBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Brak danych do wyświetlenia w wybranym okresie.</td></tr>';
+                    return;
+                }
+
+                data.forEach(waiter => {
+                    const row = summaryBody.insertRow();
+                    row.insertCell().textContent = waiter.id;
+                    row.insertCell().textContent = waiter.name;
+                    row.insertCell().textContent = waiter.orders_count;
+                    row.insertCell().textContent = `${waiter.total_sales.toFixed(2)} zł`;
+                    row.cells[2].style.textAlign = 'right';
+                    row.cells[3].style.textAlign = 'right';
+                    totalSalesSum += waiter.total_sales;
                 });
+                
+                // Generowanie stopki z sumą całkowitą
+                summaryFooter.innerHTML = `
+                    <tr>
+                        <th colspan="3" style="text-align: right; background-color: #ddd; color: #333;">SUMA CAŁKOWITA:</th>
+                        <th style="text-align: right; background-color: #ddd; color: #333;">${totalSalesSum.toFixed(2)} zł</th>
+                    </tr>
+                `;
 
             } catch (error) {
-                console.error('Błąd pobierania podsumowania:', error);
-                tableBody.innerHTML = '<tr><td colspan="3" style="color: red; text-align: center;">Błąd ładowania danych.</td></tr>';
-            }
-        }
-        
-        // Ustawienie domyślnych dat (dziś)
-        function setInitialDates() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('start_date').value = today;
-            document.getElementById('end_date').value = today;
-            // Załaduj dane na start
-            fetchWaiterSummary(today, today);
-        }
-
-        // Obsługa formularza raportu
-        document.getElementById('report-form').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const start_date = document.getElementById('start_date').value;
-            const end_date = document.getElementById('end_date').value;
-
-            // Wyświetlenie podsumowania na ekranie
-            fetchWaiterSummary(start_date, end_date);
-            
-            // Pobranie i wyświetlenie PDF (otwarcie w nowej karcie)
-            const pdfUrl = `{{ url_for('generate_report') }}?start_date=${start_date}&end_date=${end_date}`;
-            window.open(pdfUrl, '_blank');
-        });
-        
-        // Funkcja do pobierania kategorii menu
-        async function fetchCategories() {
-            try {
-                const response = await fetch('{{ url_for('api_get_categories') }}');
-                const categories = await response.json();
-                
-                categorySelect.innerHTML = ''; // Wyczyść
-                
-                categories.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category;
-                    option.textContent = category;
-                    categorySelect.appendChild(option);
-                });
-
-            } catch (error) {
-                console.error('Błąd pobierania kategorii:', error);
+                summaryBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: red;">Nie udało się załadować raportu: ${error.message}</td></tr>`;
             }
         }
 
-        // Obsługa formularza dodawania menu
-        document.getElementById('add-menu-form').onsubmit = async function(e) {
+        document.getElementById('add-item-form').onsubmit = async function(e) {
             e.preventDefault();
             const form = e.target;
-            const messageDiv = document.getElementById('add-menu-message');
+            const messageDiv = document.getElementById('menu-message');
+            messageDiv.style.display = 'none';
+
+            let category = form.category.value;
+            const newCategory = document.getElementById('new_category_input').value.trim().toUpperCase();
             
-            const category = form.category.value;
-            
+            // Użyj nowej kategorii, jeśli została wpisana
+            if (newCategory) {
+                category = newCategory;
+            }
+
+            if (!category) {
+                messageDiv.textContent = 'Proszę wybrać lub wpisać kategorię.';
+                messageDiv.style.display = 'block';
+                return;
+            }
+
             // Walidacja ceny
             const priceValue = form.price.value.replace(',', '.');
             if (isNaN(parseFloat(priceValue))) {
@@ -276,19 +222,11 @@
             }
         };
 
-        // Domyślnie otwórz pierwszą zakładkę i załaduj dane
+        // Domyślnie otwórz pierwszą zakładkę i załaduj dane raportu
         document.addEventListener('DOMContentLoaded', () => {
              openTab('billing');
-             setInitialDates();
-             fetchCategories();
+             loadWaiterSummary(); // Automatyczne ładowanie raportu po załadowaniu strony
         });
-        
-        // Upewnienie się, że tablica podsumowania odświeża się co 60 sekund
-        setInterval(() => {
-             const start_date = document.getElementById('start_date').value;
-             const end_date = document.getElementById('end_date').value;
-             fetchWaiterSummary(start_date, end_date);
-        }, 60000); // 60 sekund
     </script>
 </body>
 </html>
