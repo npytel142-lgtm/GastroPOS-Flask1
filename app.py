@@ -238,7 +238,7 @@ def admin_panel():
     start_date = request.args.get('start_date', today_str)
     end_date = request.args.get('end_date', today_str)
 
-    # Wersja poprawiona: usuwamy ładowanie waiter_summary tutaj. Zrobi to JavaScript przez API.
+    # USUNIĘTE: nie ładujemy waiter_summary w Pythonie, zrobi to JavaScript przez API.
     
     menu_categories = get_all_categories()
 
