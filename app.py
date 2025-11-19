@@ -239,7 +239,6 @@ def admin_panel():
     end_date = request.args.get('end_date', today_str)
 
     # Wersja poprawiona: usuwamy ładowanie waiter_summary tutaj. Zrobi to JavaScript przez API.
-    # waiter_summary jest teraz ładowany dynamicznie
     
     menu_categories = get_all_categories()
 
