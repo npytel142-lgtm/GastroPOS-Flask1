@@ -12,7 +12,7 @@ from PyQt5.QtGui import QIntValidator, QDoubleValidator, QFont
 # --- UŻYTKOWNICY I MENU ---
 USERS = {
     "1234": "Basia",
-    "4444": "Krystian",
+    "4444": "Aleksander",
     "5000": "Natalia",
     "5001": "Kuba",
     "5002": "Marlena",
@@ -1320,4 +1320,5 @@ if __name__ == '__main__':
     login_window.show() 
     
     # Uruchomienie pętli zdarzeń
+
     sys.exit(app.exec_())
