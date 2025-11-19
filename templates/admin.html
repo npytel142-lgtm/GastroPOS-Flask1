@@ -63,7 +63,8 @@
                     </tr>
                 </thead>
                 <tbody id="waiter-summary-body">
-                    </tbody>
+                    
+                </tbody>
                 <tfoot id="waiter-summary-footer">
                     </tfoot>
             </table>
@@ -122,8 +123,8 @@
             const summaryBody = document.getElementById('waiter-summary-body');
             const summaryFooter = document.getElementById('waiter-summary-footer');
             
-            // Wersja poprawiona: użycie url_for('api_get_waiter_summary'), które jest teraz zdefiniowane w app.py
-            const url = `{{ url_for('api_get_waiter_summary') }}?start_date=${startDate}&end_date=${endDate}`;
+            // POPRAWKA BŁĘDU BuildError: Używamy stałej ścieżki URL zamiast url_for()
+            const url = `/api/waiter_summary?start_date=${startDate}&end_date=${endDate}`; 
 
             summaryBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Ładowanie danych...</td></tr>';
             summaryFooter.innerHTML = '';
