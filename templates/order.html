@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zamówienie - Stolik {{ table_no }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; height: 100vh; margin: 0; background-color: #f4f4f4; }
+        .menu-panel, .order-panel { padding: 20px; overflow-y: auto; }
+        .menu-panel { flex: 2; background-color: #e0f7fa; } 
+        .order-panel { flex: 1; background-color: #ffffff; border-left: 1px solid #ddd; display: flex; flex-direction: column; }
+        
+        .category-list { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .category-btn { padding: 10px 15px; background-color: #008CBA; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .category-btn.active { background-color: #005f7d; }
+        
+        .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .item-btn { padding: 15px; background-color: white; border: 1px solid #ccc; border-radius: 4px; text-align: left; cursor: pointer; }
+        .item-btn .price { font-weight: bold; color: #4CAF50; float: right; }
+
+        .order-list { flex-grow: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; }
+        .order-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .order-item .qty { font-weight: bold; color: #008CBA; margin-right: 10px; }
+        .order-item .name { flex-grow: 1; }
+        .order-item .subtotal { font-weight: bold; }
+        
+        .order-footer { padding-top: 20px; border-top: 1px solid #ddd; text-align: right; }
+        .total-bill { font-size: 24px; font-weight: bold; color: #F44336; margin-bottom: 15px; }
+        .action-btn { width: 100%; padding: 15px; margin-top: 10px; font-size: 18px; border: none; border-radius: 4px; cursor: pointer; }
+        .action-btn.send { background-color: #FFC107; color: #333; }
+        .action-btn.bill { background-color: #4CAF50; color: white; }
+        .action-btn.back { background-color: #ccc; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="menu-panel">
+        <h2>Menu (Stolik {{ table_no }})</h2>
+        
+        <div class="category-list">
+            {% for category in menu_data.keys() %}
+                <button class="category-btn" onclick="showCategory('{{ category }}')" id="btn-{{ category }}">{{ category }}</button>
+            {% endfor %}
+        </div>
+        
+        <div class="item-grid" id="item-grid">
+            </div>
+    </div>
+
+    <div class="order-panel">
+        <h3>Zamówienie: {{ table_no }} - {{ waiter_name }}</h3>
+        
+        <ul class="order-list" id="order-list">
+            </ul>
+        
+        <div class="order-footer">
+    <div class="total-bill" id="total-bill">SUMA: {{ total_bill|round(2) }} zł</div>
+    <button class="action-btn send" onclick="sendOrder()">Wyślij Bon</button>
+    <button class="action-btn bill" onclick="finalizeBill()">Rachunek</button>
+    <a href="{{ url_for('tables') }}" class="action-btn back">Wróć</a>
+</div>
+    </div>
+    
+    <script>
+        // Dane z Flaska, przekazane do JavaScriptu
+        const menuData = {{ menu_data | tojson }};
+        const itemGrid = document.getElementById('item-grid');
+        const orderList = document.getElementById('order-list');
+        const totalBillDisplay = document.getElementById('total-bill');
+        const tableNo = {{ table_no }};
+        let currentCategory = '{{ default_category }}';
+
+        // Funkcje UI
+        function renderItems(category) {
+            itemGrid.innerHTML = '';
+            const items = menuData[category] || [];
+            
+            items.forEach(item => {
+                const [name, price] = item;
+                const btn = document.createElement('button');
+                btn.className = 'item-btn';
+                btn.innerHTML = `${name} <span class="price">${price.toFixed(2)} zł</span>`;
+                btn.onclick = () => addItemToOrder(name, price, category);
+                itemGrid.appendChild(btn);
+            });
+            
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const activeBtn = document.getElementById(`btn-${category}`);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+
+        function showCategory(category) {
+            currentCategory = category;
+            renderItems(category);
+        }
+
+        function renderOrders(orders, total) {
+            orderList.innerHTML = '';
+            
+            orders.forEach(order => {
+                // order: (id, item, category, total_qty, price, discount_percent, status, notes)
+                const [id, item, category, qty, price, discount, status, notes] = order;
+                const subtotal = qty * price * (1 - discount / 100);
+                
+                const li = document.createElement('li');
+                li.className = 'order-item';
+                li.innerHTML = `
+                    <span class="qty">${qty}x</span>
+                    <span class="name">${item} ${notes ? `[${notes}]` : ''}</span>
+                    <span class="subtotal">${subtotal.toFixed(2)} zł</span>
+                `;
+                orderList.appendChild(li);
+            });
+            
+            totalBillDisplay.innerHTML = `SUMA: ${parseFloat(total).toFixed(2)} zł`;
+        }
+
+        // Funkcja do komunikacji z serwerem Flask
+        function addItemToOrder(name, price, category) {
+            fetch('{{ url_for("api_add_item") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    table_no: tableNo,
+                    item_name: name,
+                    category: category,
+                    price: price
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderOrders(data.orders, data.total);
+                } else {
+                    alert('Błąd: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Błąd:', error));
+        }
+        
+        window.onload = function() {
+            renderItems(currentCategory);
+            const initialOrders = {{ orders | tojson }};
+            const initialTotal = {{ total_bill }};
+            renderOrders(initialOrders, initialTotal);
+        };
+// ... (istniejący kod JavaScript w order.html)
+
+        window.onload = function() {
+            renderItems(currentCategory);
+            const initialOrders = {{ orders | tojson }};
+            const initialTotal = {{ total_bill }};
+            renderOrders(initialOrders, initialTotal);
+        };
+
+        // ===================================================
+        // TUTAJ WSTAWIAMY NOWE FUNKCJE (PUNKT 2.2)
+        // ===================================================
+
+        function sendOrder() {
+            if (!confirm("Czy na pewno chcesz wysłać zamówienie (Bon) do kuchni/baru?")) {
+                return;
+            }
+            
+            fetch('{{ url_for("api_send_order") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ table_no: tableNo })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success && data.redirect_url) {
+                    window.location.href = data.redirect_url; 
+                } else {
+                     window.location.reload(); 
+                }
+            })
+            .catch(error => console.error('Błąd:', error));
+        }
+
+        function finalizeBill() {
+            if (!confirm("Czy na pewno chcesz zamknąć rachunek?")) {
+                return;
+            }
+
+            fetch('{{ url_for("api_finalize_bill") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ table_no: tableNo })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success && data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                } else {
+                     window.location.reload(); 
+                }
+            })
+            .catch(error => console.error('Błąd:', error));
+        }
+
+        // ===================================================
+        // KONIEC NOWYCH FUNKCJI
+        // ===================================================
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administratora - GastroPOS</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        h1 { color: #333; border-bottom: 2px solid #008CBA; padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { color: #008CBA; margin-top: 30px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+        .tab { display: none; }
+        .tab.active { display: block; }
+        .tab-buttons button { padding: 10px 20px; margin-right: 10px; cursor: pointer; border: 1px solid #ccc; background: #eee; border-radius: 5px 5px 0 0; }
+        .tab-buttons button.active { background: #008CBA; color: white; border-color: #008CBA; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #008CBA; color: white; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .form-group button { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        .form-group button:hover { background-color: #45a049; }
+        .message { padding: 10px; background-color: #f0f8ff; border: 1px solid #008CBA; color: #008CBA; margin-top: 10px; border-radius: 4px; display: none; }
+        .back-button { float: right; padding: 10px 20px; background-color: #f44336; color: white; text-decoration: none; border-radius: 4px; }
+        .back-button:hover { background-color: #da190b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('tables') }}" class="back-button">Wróć do Stolików</a>
+        <h1>Panel Administratora</h1>
+
+        <div class="tab-buttons">
+            <button class="active" onclick="openTab('billing')">Rozliczenie Kelnerów</button>
+            <button onclick="openTab('menu')">Zarządzanie Menu</button>
+        </div>
+
+        <div id="billing" class="tab active">
+            <h2>Raport Sprzedaży wg Kelnerów</h2>
+            <form id="report-form" style="display: flex; gap: 20px; align-items: flex-end; margin-bottom: 20px;">
+                <div class="form-group" style="flex: 1;">
+                    <label for="start_date">Data początkowa:</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date }}" required>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="end_date">Data końcowa:</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date }}" required>
+                </div>
+                <div class="form-group" style="flex: 0; display: flex; gap: 10px;">
+                    <button type="submit" formaction="{{ url_for('admin_panel') }}" formmethod="GET" style="background-color: #008CBA;">Wyświetl Raport</button>
+                    <button type="submit" formaction="{{ url_for('api_generate_pdf') }}" formmethod="GET" style="background-color: #f44336;">Generuj PDF 💾</button>
+                </div>
+            </form>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Kelnera</th>
+                        <th>Imię</th>
+                        <th>Liczba Zamkniętych Rachunków</th>
+                        <th>Łączna Sprzedaż (PLN)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for waiter in waiter_summary %}
+                    <tr>
+                        <td>{{ waiter.id }}</td>
+                        <td>{{ waiter.name }}</td>
+                        <td>{{ waiter.orders_count }}</td>
+                        <td>{{ "%.2f"|format(waiter.total_sales) }} zł</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="menu" class="tab">
+            <h2>Dodawanie Nowej Pozycji Menu</h2>
+            <div id="menu-message" class="message"></div>
+            <form id="add-item-form">
+                <div class="form-group">
+                    <label for="item_name">Nazwa pozycji:</label>
+                    <input type="text" id="item_name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="item_price">Cena (np. 12.50):</label>
+                    <input type="text" id="item_price" name="price" required placeholder="Użyj kropki lub przecinka">
+                </div>
+                <div class="form-group">
+                    <label for="item_category">Kategoria:</label>
+                    <select id="item_category" name="category" required>
+                        <option value="">-- Wybierz istniejącą --</option>
+                        {% for cat in menu_categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" id="new_category_input" placeholder="Wpisz nową kategorię (jeśli brak na liście)" style="margin-top: 5px;">
+                </div>
+                <div class="form-group">
+                    <button type="submit">Dodaj Pozycję do Menu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openTab(tabName) {
+            var i;
+            var tabs = document.getElementsByClassName("tab");
+            for (i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove("active");
+            }
+            document.getElementById(tabName).classList.add("active");
+            
+            var buttons = document.querySelectorAll('.tab-buttons button');
+            for (i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove("active");
+                if (buttons[i].textContent.includes(tabName === 'billing' ? 'Rozliczenie' : 'Menu')) {
+                     buttons[i].classList.add("active");
+                }
+            }
+        }
+
+        document.getElementById('add-item-form').onsubmit = async function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const messageDiv = document.getElementById('menu-message');
+            messageDiv.style.display = 'none';
+
+            let category = form.category.value;
+            const newCategory = document.getElementById('new_category_input').value.trim().toUpperCase();
+            
+            // Użyj nowej kategorii, jeśli została wpisana
+            if (newCategory) {
+                category = newCategory;
+            }
+
+            if (!category) {
+                messageDiv.textContent = 'Proszę wybrać lub wpisać kategorię.';
+                messageDiv.style.display = 'block';
+                return;
+            }
+
+            // Walidacja ceny
+            const priceValue = form.price.value.replace(',', '.');
+            if (isNaN(parseFloat(priceValue))) {
+                 messageDiv.textContent = 'Cena musi być liczbą.';
+                 messageDiv.style.display = 'block';
+                 return;
+            }
+
+            const formData = new FormData();
+            formData.append('name', form.name.value);
+            formData.append('price', priceValue); 
+            formData.append('category', category);
+
+            const response = await fetch('{{ url_for("api_add_item_admin") }}', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            messageDiv.textContent = result.message;
+            messageDiv.style.display = 'block';
+            
+            if (result.success) {
+                messageDiv.style.backgroundColor = '#d4edda'; // Zielony
+                messageDiv.style.color = '#155724';
+                // Odświeżenie, aby nowa kategoria/pozycja pojawiła się
+                setTimeout(() => window.location.reload(), 1500); 
+            } else {
+                messageDiv.style.backgroundColor = '#f8d7da'; // Czerwony
+                messageDiv.style.color = '#721c24';
+            }
+        };
+
+        // Domyślnie otwórz pierwszą zakładkę
+        document.addEventListener('DOMContentLoaded', () => {
+             openTab('billing');
+        });
+    </script>
+</body>
+</html>

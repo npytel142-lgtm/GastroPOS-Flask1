@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stoliki</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { color: #008CBA; margin: 0; }
+        .logout-btn { background-color: #F44336; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
+        .tables-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 900px; margin: 0 auto; }
+        .table-btn { padding: 30px; border-radius: 8px; font-size: 18px; font-weight: bold; text-align: center; text-decoration: none; display: block; }
+        
+        .table-btn.free { background-color: #E8F5E9; color: #4CAF50; border: 3px solid #4CAF50; }
+        .table-btn.active { background-color: #FFEBEE; color: #F44336; border: 3px solid #F44336; pointer-events: none; opacity: 0.6; } 
+        .table-btn.my_active { background-color: #FFFDE7; color: #FFC107; border: 3px solid #FFC107; } 
+    </style>
+    <meta http-equiv="refresh" content="5">
+</head>
+<body>
+    <div class="header">
+        <h1>Widok Stolików - Kelner: {{ waiter_name }}</h1>
+        {% if waiter_id == '9999' %}
+            <a href="{{ url_for('admin_panel') }}" class="logout-btn" style="background-color: #005f7d;">ADMIN PANEL</a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}" class="logout-btn">Wyloguj ({{ waiter_id }})</a>
+    </div>
+    
+    <div class="tables-grid">
+        {% for table in tables %}
+            <a href="{{ url_for('order_view', table_no=table.no) }}" 
+               class="table-btn {{ table.status }}"
+               {% if not table.is_enabled and table.status != 'my_active' %}
+                   onclick="alert('Stolik {{ table.no }} jest zajęty przez: {{ table.owner }}'); return false;"
+               {% endif %}>
+                Stolik {{ table.no }}<br>
+                {% if table.status == 'free' %}
+                    Wolny
+                {% else %}
+                    Zajęty: {{ table.owner }}
+                {% endif %}
+            </a>
+        {% endfor %}
+    </div>
+</body>
+</html>

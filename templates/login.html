@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logowanie POS</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f4; margin: 0; }
+        .login-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center; }
+        h1 { color: #008CBA; }
+        input[type="password"] { font-size: 24px; padding: 10px; width: 100%; margin: 10px 0; border: 2px solid #ccc; border-radius: 4px; text-align: center; }
+        input[type="submit"] { background-color: #008CBA; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        .error { color: #F44336; margin-top: 10px; }
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 300px; margin: 20px auto; }
+        .numpad button { padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background-color: #eee; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Wprowadź PIN</h1>
+        
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST">
+            <input type="password" id="pin_input" name="pin" maxlength="4" placeholder="••••" required readonly>
+            
+            <div class="numpad">
+                <button type="button" onclick="appendPin('1')">1</button>
+                <button type="button" onclick="appendPin('2')">2</button>
+                <button type="button" onclick="appendPin('3')">3</button>
+                <button type="button" onclick="appendPin('4')">4</button>
+                <button type="button" onclick="appendPin('5')">5</button>
+                <button type="button" onclick="appendPin('6')">6</button>
+                <button type="button" onclick="appendPin('7')">7</button>
+                <button type="button" onclick="appendPin('8')">8</button>
+                <button type="button" onclick="appendPin('9')">9</button>
+                <button type="button" onclick="clearPin()">C</button>
+                <button type="button" onclick="appendPin('0')">0</button>
+                <input type="submit" value="OK">
+            </div>
+            
+        </form>
+        
+        <script>
+            function appendPin(num) {
+                const input = document.getElementById('pin_input');
+                if (input.value.length < 4) {
+                    input.value += num;
+                }
+            }
+            function clearPin() {
+                document.getElementById('pin_input').value = '';
+            }
+        </script>
+
+    </div>
+</body>
+</html>
